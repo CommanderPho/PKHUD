@@ -117,9 +117,9 @@ open class PKHUD: NSObject {
             container.frameView.effect = newValue
         }
     }
-    
+
     open var leadingMargin: CGFloat = 0
-    
+
     open var trailingMargin: CGFloat = 0
 
     open func show(onView view: UIView? = nil) {
@@ -138,7 +138,11 @@ open class PKHUD: NSObject {
         // If the grace time is set, postpone the HUD display
         if gracePeriod > 0.0 {
             let timer = Timer(timeInterval: gracePeriod, target: self, selector: #selector(PKHUD.handleGraceTimer(_:)), userInfo: nil, repeats: false)
+            #if swift(>=4.2)
+            RunLoop.current.add(timer, forMode: .common)
+            #else
             RunLoop.current.add(timer, forMode: .commonModes)
+            #endif
             graceTimer = timer
         } else {
             showContent()
@@ -193,6 +197,14 @@ open class PKHUD: NSObject {
         if let animatingContentView = contentView as? PKHUDAnimating {
             animatingContentView.stopAnimation?()
         }
+    }
+    
+    internal func registerForKeyboardNotifications() {
+        container.registerForKeyboardNotifications()
+    }
+    
+    internal func deregisterFromKeyboardNotifications() {
+        container.deregisterFromKeyboardNotifications()
     }
 
     // MARK: Timer callbacks

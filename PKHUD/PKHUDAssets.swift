@@ -18,12 +18,29 @@ open class PKHUDAssets: NSObject {
     open class var progressCircularImage: UIImage { return PKHUDAssets.bundledImage(named: "progress_circular") }
 
     internal class func bundledImage(named name: String) -> UIImage {
-        let bundle = Bundle(for: PKHUDAssets.self)
-        let image = UIImage(named: name, in: bundle, compatibleWith: nil)
-        if let image = image {
+        let primaryBundle = Bundle(for: PKHUDAssets.self)
+        if let image = UIImage(named: name, in: .module, compatibleWith: nil) {
+            // Load image from SPM if available
+            return image
+        } else if let image = UIImage(named: name, in: primaryBundle, compatibleWith: nil) {
+            // Load image in cases where PKHUD is directly integrated
+            return image
+        } else if
+            let subBundleUrl = primaryBundle.url(forResource: "PKHUDResources", withExtension: "bundle"),
+            let subBundle = Bundle(url: subBundleUrl),
+            let image = UIImage(named: name, in: subBundle, compatibleWith: nil)
+        {
+            // Load image in cases where PKHUD is integrated via cocoapods as a dynamic or static framework with a separate resource bundle
             return image
         }
 
         return UIImage()
     }
 }
+
+#if IS_FRAMEWORK_TARGET
+private extension Bundle {
+    /// In packages a .module static var is automatically available, here we "create" one for the framework build.
+    static var module: Bundle { return Bundle(for: PKHUDAssets.self) }
+}
+#endif
